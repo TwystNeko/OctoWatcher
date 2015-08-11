@@ -5,7 +5,7 @@ using System.Net;
 using System.IO;
 using Temp.IO;
 
-namespace OctoUpload
+namespace OctoWatcher
 {
 
 

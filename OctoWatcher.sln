@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctoUpload", "OctoUpload\OctoUpload.csproj", "{D25DDCEF-D039-46FB-B71F-CC6DEE730E29}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OctoWatcher", "OctoWatcher\OctoWatcher.csproj", "{D25DDCEF-D039-46FB-B71F-CC6DEE730E29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

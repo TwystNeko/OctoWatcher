@@ -1,4 +1,4 @@
-﻿namespace OctoUpload
+﻿namespace OctoWatcher
 {
     partial class mainForm
     {
@@ -187,7 +187,7 @@
             this.Controls.Add(this.label1);
             this.Name = "mainForm";
             this.RightToLeftLayout = true;
-            this.Text = "OctoUpload";
+            this.Text = "OctoWatcher";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.mainForm_FormClosing);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();

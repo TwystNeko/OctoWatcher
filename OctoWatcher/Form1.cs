@@ -30,7 +30,14 @@ namespace OctoWatcher
 
         private void enableWatch_CheckedChanged(object sender, EventArgs e)
         {
-            if(enableWatch.Checked == true) {
+            Properties.Settings.Default.watchFolder = watchFolder.Text;
+            Properties.Settings.Default.octoPrintAddress = octoPrintAddress.Text;
+            Properties.Settings.Default.apiKey = apiKey.Text;
+            Properties.Settings.Default.enableKeywords = enableKeywords.Checked;
+            Properties.Settings.Default.localStorage = localUpload.Checked;
+            Properties.Settings.Default.autoStart = autoStart.Checked;
+            Properties.Settings.Default.Save();
+            if (enableWatch.Checked == true) {
                 fsWatcher.Path = watchFolder.Text;
                 fsWatcher.Filter = "*.gco*"; // only watch for gcode
                 fsWatcher.NotifyFilter = NotifyFilters.LastWrite;
@@ -44,46 +51,27 @@ namespace OctoWatcher
             }
         }
 
-        public static bool IsFileReady(String sFilename)
-        {
-            try
-            {
-                using (FileStream inputStream = File.Open(sFilename, FileMode.Open, FileAccess.Read, FileShare.None))
-                {
-                    if (inputStream.Length > 0)
-                    {
-                        
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            catch(Exception)
-            {
-               // Console.WriteLine("Not Ready!");
-                return false;
-            }
-        }
-
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
-            if(IsFileReady(e.FullPath))
-            {
                 fsWatcher.EnableRaisingEvents = false;
-              //  Console.WriteLine("File: " + e.FullPath + " " + e.ChangeType);
-             //   Console.WriteLine("I would upload here.");
                 do_upload(e.FullPath);
-      
-            }
+
         }
 
         private void do_upload(string filename)
         {
+            System.Threading.Thread.Sleep(5000);
             NameValueCollection parameters = new NameValueCollection();
-            string url = "http://" + octoPrintAddress.Text + "/api/files/";
+            string url = octoPrintAddress.Text + "/api/files/";
+            string prepend = "http://";
+            if(octoPrintAddress.Text.StartsWith("http://"))
+            {
+                prepend = "";
+            }
+            if(octoPrintAddress.Text.StartsWith("https://"))
+            {
+                prepend = "";
+            }
             string uploadName = Path.GetFileName(filename); // need to get just the filename portion
             string uploadedFileStatus = "Uploaded " + uploadName;
             if (localUpload.Checked == true)
@@ -102,21 +90,10 @@ namespace OctoWatcher
                     parameters.Add("select", "true");
                     uploadName = uploadName.Replace("-select.gco", ".gco");
                     uploadedFileStatus += " as " + uploadName;
-                } else
-                {
-                    parameters.Add("select", "false");
-                    uploadName = uploadName.Replace("-select.gco", ".gco");
-                    uploadedFileStatus += " as " + uploadName;
-                }
+                } 
                 if (uploadName.Contains("-print.gco"))
                 {
                     parameters.Add("print", "true");
-                    uploadName = uploadName.Replace("-print.gco", ".gco");
-                    uploadedFileStatus += " as " + uploadName;
-                }
-                else
-                {
-                    parameters.Add("print", "false");
                     uploadName = uploadName.Replace("-print.gco", ".gco");
                     uploadedFileStatus += " as " + uploadName;
                 }
@@ -126,7 +103,7 @@ namespace OctoWatcher
                 parameters.Add("select", "false");
                 parameters.Add("print", "false");
             }
-            UploadMultipart(File.ReadAllBytes(filename), uploadName, "application/octet-stream", url, apiKey.Text, parameters);
+            UploadMultipart(File.ReadAllBytes(filename), uploadName, "application/octet-stream", prepend + url, apiKey.Text, parameters);
 
             statusLabel.Text = uploadedFileStatus;
 

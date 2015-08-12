@@ -4,6 +4,8 @@ using System.Windows.Forms;
 using System.Net;
 using System.IO;
 using Temp.IO;
+using System.Configuration;
+using OctoWatcher.Config;
 
 namespace OctoWatcher
 {
@@ -15,28 +17,12 @@ namespace OctoWatcher
         public mainForm()
         {
             InitializeComponent();
-            watchFolder.Text = Properties.Settings.Default.watchFolder;
-            octoPrintAddress.Text = Properties.Settings.Default.octoPrintAddress;
-            apiKey.Text = Properties.Settings.Default.apiKey;
-            enableKeywords.Checked = Properties.Settings.Default.enableKeywords;
-            localUpload.Checked = Properties.Settings.Default.localStorage;
-            autoStart.Checked = Properties.Settings.Default.autoStart;
-            if(autoStart.Checked == true)
-            {
-                enableWatch.Checked = true;
-                enableWatch_CheckedChanged(this, null);
-            }
+            loadSettings();
         }
 
         private void enableWatch_CheckedChanged(object sender, EventArgs e)
         {
-            Properties.Settings.Default.watchFolder = watchFolder.Text;
-            Properties.Settings.Default.octoPrintAddress = octoPrintAddress.Text;
-            Properties.Settings.Default.apiKey = apiKey.Text;
-            Properties.Settings.Default.enableKeywords = enableKeywords.Checked;
-            Properties.Settings.Default.localStorage = localUpload.Checked;
-            Properties.Settings.Default.autoStart = autoStart.Checked;
-            Properties.Settings.Default.Save();
+            saveSettings();
             if (enableWatch.Checked == true) {
                 fsWatcher.Path = watchFolder.Text;
                 fsWatcher.Filter = "*.gco*"; // only watch for gcode
@@ -123,6 +109,7 @@ namespace OctoWatcher
             var nfile = webClient.Encoding.GetBytes(package);
 
             byte[] resp = webClient.UploadData(url, "POST", nfile);
+            nfile = null;
             fsWatcher.EnableRaisingEvents = true;
         }
 
@@ -138,15 +125,135 @@ namespace OctoWatcher
             }
         } 
 
+        public void saveSettings()
+        {
+            string profile = profileList.SelectedText;
+            Properties.Settings.Default.profileName = profile;
+            ServerInfoSection serverProfile = null;
+            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
+            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
+            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
+            try
+            {
+                serverProfile = (ServerInfoSection)config.GetSection(profile);
+                config.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection(profile);
+                if(serverProfile == null) // doesn't exist!
+                {
+                    serverProfile = new ServerInfoSection();
+                    serverProfile.SectionInformation.AllowExeDefinition = ConfigurationAllowExeDefinition.MachineToLocalUser;
+                    serverProfile.SectionInformation.AllowOverride = true;
+                  //  serverProfile.profileName = profile;
+                    serverProfile.watchFolder = watchFolder.Text;
+                    serverProfile.octoPrintAddress = octoPrintAddress.Text;
+                    serverProfile.apiKey = apiKey.Text;
+                    serverProfile.enableKeywords = enableKeywords.Checked;
+                    serverProfile.localUpload = localUpload.Checked;
+                    serverProfile.autoStart = autoStart.Checked;
+                    config.Sections.Add(profile, serverProfile);
+                } else // it exists, update it!
+                {
+                    serverProfile.watchFolder = watchFolder.Text;
+                    serverProfile.octoPrintAddress = octoPrintAddress.Text;
+                    serverProfile.apiKey = apiKey.Text;
+                    serverProfile.enableKeywords = enableKeywords.Checked;
+                    serverProfile.localUpload = localUpload.Checked;
+                    serverProfile.autoStart = autoStart.Checked;
+                }
+                config.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection(profile);
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                Console.WriteLine("[Exception error: {0}]",
+                    e.ToString());
+            }
+
+            Properties.Settings.Default.Save();
+        }
+
+        public void loadSettings()
+        {
+            // load profile
+            profileList.SelectedText = Properties.Settings.Default.profileName;
+            string profile = profileList.SelectedText;
+            ServerInfoSection serverProfile = null;
+            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
+            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
+            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
+            try
+            {
+                serverProfile = (ServerInfoSection)config.GetSection(profile);
+                if(serverProfile != null)
+                {
+                    watchFolder.Text = serverProfile.watchFolder;
+                    octoPrintAddress.Text = serverProfile.octoPrintAddress;
+                    apiKey.Text = serverProfile.apiKey;
+                    enableKeywords.Checked = serverProfile.enableKeywords;
+                    localUpload.Checked = serverProfile.localUpload;
+                    autoStart.Checked = serverProfile.autoStart;
+                    if (autoStart.Checked == true)
+                    {
+                        enableWatch.Checked = true;
+                        enableWatch_CheckedChanged(this, null);
+                    }
+                }
+
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                Console.WriteLine("[Exception error: {0}]",
+                    e.ToString());
+            }
+
+        }
         private void mainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Properties.Settings.Default.watchFolder = watchFolder.Text ;
-            Properties.Settings.Default.octoPrintAddress = octoPrintAddress.Text;
-            Properties.Settings.Default.apiKey = apiKey.Text;
-            Properties.Settings.Default.enableKeywords = enableKeywords.Checked;
-            Properties.Settings.Default.localStorage = localUpload.Checked;
-            Properties.Settings.Default.autoStart = autoStart.Checked;
-            Properties.Settings.Default.Save();
+            saveSettings();
+        }
+
+        private void saveProfile_Click(object sender, EventArgs e)
+        {
+            if(profileList.SelectedText != "")
+            {
+                saveSettings();
+            }
+        }
+
+        private void deleteProfile_Click(object sender, EventArgs e)
+        {
+            if(profileList.SelectedText != "")
+            {
+                removeProfile(profileList.SelectedText);
+            }
+        }
+
+        private void removeProfile(string selectedText)
+        {
+            string profile = selectedText;
+            ServerInfoSection serverProfile = null;
+            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
+            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
+            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
+            config.Sections.Remove(profile);
+            config.Save(ConfigurationSaveMode.Modified);
+            refreshProfileList();
+        }
+
+        private void refreshProfileList()
+        {
+            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
+            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
+            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
+            foreach (ConfigurationSection cs in config.Sections)
+            {
+
+                Console.WriteLine(cs.SectionInformation.Name);
+            }
         }
     }
 

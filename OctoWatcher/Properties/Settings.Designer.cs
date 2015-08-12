@@ -94,5 +94,17 @@ namespace OctoWatcher.Properties {
                 this["autoStart"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Default")]
+        public string profileName {
+            get {
+                return ((string)(this["profileName"]));
+            }
+            set {
+                this["profileName"] = value;
+            }
+        }
     }
 }

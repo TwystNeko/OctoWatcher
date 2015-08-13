@@ -4,8 +4,8 @@ using System.Windows.Forms;
 using System.Net;
 using System.IO;
 using Temp.IO;
-using System.Configuration;
-using OctoWatcher.Config;
+using Nini.Config;
+using Nini.Ini;
 
 namespace OctoWatcher
 {
@@ -14,9 +14,14 @@ namespace OctoWatcher
     public partial class mainForm : Form
     {
         MyFileSystemWatcher fsWatcher = new MyFileSystemWatcher();
+
+
+  
+
         public mainForm()
         {
             InitializeComponent();
+
             loadSettings();
         }
 
@@ -127,86 +132,32 @@ namespace OctoWatcher
 
         public void saveSettings()
         {
-            string profile = profileList.SelectedText;
-            Properties.Settings.Default.profileName = profile;
-            ServerInfoSection serverProfile = null;
-            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
-            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
-            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
-            try
-            {
-                serverProfile = (ServerInfoSection)config.GetSection(profile);
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection(profile);
-                if(serverProfile == null) // doesn't exist!
-                {
-                    serverProfile = new ServerInfoSection();
-                    serverProfile.SectionInformation.AllowExeDefinition = ConfigurationAllowExeDefinition.MachineToLocalUser;
-                    serverProfile.SectionInformation.AllowOverride = true;
-                  //  serverProfile.profileName = profile;
-                    serverProfile.watchFolder = watchFolder.Text;
-                    serverProfile.octoPrintAddress = octoPrintAddress.Text;
-                    serverProfile.apiKey = apiKey.Text;
-                    serverProfile.enableKeywords = enableKeywords.Checked;
-                    serverProfile.localUpload = localUpload.Checked;
-                    serverProfile.autoStart = autoStart.Checked;
-                    config.Sections.Add(profile, serverProfile);
-                } else // it exists, update it!
-                {
-                    serverProfile.watchFolder = watchFolder.Text;
-                    serverProfile.octoPrintAddress = octoPrintAddress.Text;
-                    serverProfile.apiKey = apiKey.Text;
-                    serverProfile.enableKeywords = enableKeywords.Checked;
-                    serverProfile.localUpload = localUpload.Checked;
-                    serverProfile.autoStart = autoStart.Checked;
-                }
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection(profile);
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                Console.WriteLine("[Exception error: {0}]",
-                    e.ToString());
-            }
-
-            Properties.Settings.Default.Save();
+            
         }
 
         public void loadSettings()
         {
-            // load profile
-            profileList.SelectedText = Properties.Settings.Default.profileName;
-            string profile = profileList.SelectedText;
-            ServerInfoSection serverProfile = null;
-            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
-            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
-            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
-            try
+            IniConfigSource source = new IniConfigSource();
+            if (File.Exists(System.Environment.SpecialFolder.ApplicationData + "OctoWatcher.ini"))
             {
-                serverProfile = (ServerInfoSection)config.GetSection(profile);
-                if(serverProfile != null)
-                {
-                    watchFolder.Text = serverProfile.watchFolder;
-                    octoPrintAddress.Text = serverProfile.octoPrintAddress;
-                    apiKey.Text = serverProfile.apiKey;
-                    enableKeywords.Checked = serverProfile.enableKeywords;
-                    localUpload.Checked = serverProfile.localUpload;
-                    autoStart.Checked = serverProfile.autoStart;
-                    if (autoStart.Checked == true)
-                    {
-                        enableWatch.Checked = true;
-                        enableWatch_CheckedChanged(this, null);
-                    }
-                }
-
+                source.Load(System.Environment.SpecialFolder.ApplicationData + "OctoWatcher.ini");
             }
-            catch (ConfigurationErrorsException e)
+            else
             {
-                Console.WriteLine("[Exception error: {0}]",
-                    e.ToString());
+                IConfig nconfig = source.AddConfig("Default");
+                nconfig.Set("watchFolder", System.Environment.SpecialFolder.MyDocuments);
+                nconfig.Set("octoPrintAddress", "http://octopi.local");
+                nconfig.Set("apiKey", "Enter API Key");
+                nconfig.Set("enableKeywords", "true");
+                nconfig.Set("localUpload", "true");
+                nconfig.Set("autoStart", "false");
+                source.Save(System.Environment.SpecialFolder.ApplicationData + "OctoWatcher.ini");
+                profileList.Items.Add("Default");
             }
+            string profileName = profileList.Text;
+            IConfig config = source.Configs[profileName];
+            watchFolder.Text = config.GetString("watchFolder");
+            octoPrintAddress.Text = config.GetString("octoPrintAddress");
 
         }
         private void mainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -216,44 +167,22 @@ namespace OctoWatcher
 
         private void saveProfile_Click(object sender, EventArgs e)
         {
-            if(profileList.SelectedText != "")
-            {
-                saveSettings();
-            }
+
         }
 
         private void deleteProfile_Click(object sender, EventArgs e)
         {
-            if(profileList.SelectedText != "")
-            {
-                removeProfile(profileList.SelectedText);
-            }
+
         }
 
         private void removeProfile(string selectedText)
         {
-            string profile = selectedText;
-            ServerInfoSection serverProfile = null;
-            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
-            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
-            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
-            config.Sections.Remove(profile);
-            config.Save(ConfigurationSaveMode.Modified);
-            refreshProfileList();
+
         }
 
         private void refreshProfileList()
         {
-            Configuration roamingConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            ExeConfigurationFileMap configFileMap = new ExeConfigurationFileMap();
-            configFileMap.ExeConfigFilename = roamingConfig.FilePath;
-            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
-            foreach (ConfigurationSection cs in config.Sections)
-            {
 
-                Console.WriteLine(cs.SectionInformation.Name);
-            }
         }
     }
 

@@ -4,8 +4,7 @@ using System.Windows.Forms;
 using System.Net;
 using System.IO;
 using Temp.IO;
-using Nini.Config;
-using Nini.Ini;
+using Gajatko.IniFiles;
 
 namespace OctoWatcher
 {
@@ -14,15 +13,42 @@ namespace OctoWatcher
     public partial class mainForm : Form
     {
         MyFileSystemWatcher fsWatcher = new MyFileSystemWatcher();
+        string cfile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/octowatcher.ini";
+        IniFile config = new IniFile();
 
-
-  
 
         public mainForm()
         {
             InitializeComponent();
 
+            if (File.Exists(cfile))
+            {
+                // it exists, let's load it.
+                config = IniFile.FromFile(cfile);
+            }
+            else
+            {
+                config["Default"]["watchFolder"] = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                config["Default"]["octoPrintAddress"] = "http://octopi.local";
+                config["Default"]["apiKey"] = "Enter API Key";
+                config["Default"]["enableKeywords"] = "true";
+                config["Default"]["localUpload"] = "true";
+                config["Default"]["autoStart"] = "false";
+                config.Save(cfile);
+            }
+            refreshProfileList();
+           
             loadSettings();
+        }
+
+        private void refreshProfileList()
+        {
+            profileList.Items.Clear();
+            string[] sections = config.GetSectionNames();
+            foreach (string name in sections)
+            {
+                profileList.Items.Add(name);
+            }
         }
 
         private void enableWatch_CheckedChanged(object sender, EventArgs e)
@@ -132,33 +158,41 @@ namespace OctoWatcher
 
         public void saveSettings()
         {
-            
+            string profileName = profileList.Text;
+            config[profileName]["watchFolder"] = watchFolder.Text;
+            config[profileName]["octoPrintAddress"] = octoPrintAddress.Text;
+            config[profileName]["apiKey"] = apiKey.Text;
+            config[profileName]["enableKeywords"] = enableKeywords.Checked.ToString();
+            config[profileName]["localUpload"] = localUpload.Checked.ToString();
+            config[profileName]["autoStart"] = autoStart.Checked.ToString();
+            config.Save(cfile);
+            config = IniFile.FromFile(cfile);
         }
 
         public void loadSettings()
         {
-            IniConfigSource source = new IniConfigSource();
-            if (File.Exists(System.Environment.SpecialFolder.ApplicationData + "OctoWatcher.ini"))
-            {
-                source.Load(System.Environment.SpecialFolder.ApplicationData + "OctoWatcher.ini");
-            }
-            else
-            {
-                IConfig nconfig = source.AddConfig("Default");
-                nconfig.Set("watchFolder", System.Environment.SpecialFolder.MyDocuments);
-                nconfig.Set("octoPrintAddress", "http://octopi.local");
-                nconfig.Set("apiKey", "Enter API Key");
-                nconfig.Set("enableKeywords", "true");
-                nconfig.Set("localUpload", "true");
-                nconfig.Set("autoStart", "false");
-                source.Save(System.Environment.SpecialFolder.ApplicationData + "OctoWatcher.ini");
-                profileList.Items.Add("Default");
-            }
             string profileName = profileList.Text;
-            IConfig config = source.Configs[profileName];
-            watchFolder.Text = config.GetString("watchFolder");
-            octoPrintAddress.Text = config.GetString("octoPrintAddress");
-
+            if(config[profileName]!= null)
+            {
+                // it exists, load the profile
+                watchFolder.Text = config[profileName]["watchFolder"];
+                octoPrintAddress.Text = config[profileName]["octoPrintAddress"];
+                apiKey.Text = config[profileName]["apiKey"];
+                enableKeywords.Checked = Convert.ToBoolean(config[profileName]["enableKeywords"]);
+                localUpload.Checked = Convert.ToBoolean(config[profileName]["localUpload"]);
+                autoStart.Checked = Convert.ToBoolean(config[profileName]["autoStart"]);
+            } else
+            {
+                // set to defaults
+                profileName = "Default";
+                watchFolder.Text = config[profileName]["watchFolder"];
+                octoPrintAddress.Text = config[profileName]["octoPrintAddress"];
+                apiKey.Text = config[profileName]["apiKey"];
+                enableKeywords.Checked = Convert.ToBoolean(config[profileName]["enableKeywords"]);
+                localUpload.Checked = Convert.ToBoolean(config[profileName]["localUpload"]);
+                autoStart.Checked = Convert.ToBoolean(config[profileName]["autoStart"]);
+            }
+                 
         }
         private void mainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -167,7 +201,7 @@ namespace OctoWatcher
 
         private void saveProfile_Click(object sender, EventArgs e)
         {
-
+            saveSettings();
         }
 
         private void deleteProfile_Click(object sender, EventArgs e)
@@ -180,9 +214,9 @@ namespace OctoWatcher
 
         }
 
-        private void refreshProfileList()
+        private void profileList_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            loadSettings();
         }
     }
 

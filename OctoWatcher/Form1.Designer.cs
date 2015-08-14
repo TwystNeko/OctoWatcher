@@ -179,6 +179,7 @@
             this.profileList.Name = "profileList";
             this.profileList.Size = new System.Drawing.Size(156, 21);
             this.profileList.TabIndex = 12;
+            this.profileList.SelectedIndexChanged += new System.EventHandler(this.profileList_SelectedIndexChanged);
             // 
             // label4
             // 

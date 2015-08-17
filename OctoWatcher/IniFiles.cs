@@ -363,8 +363,10 @@ namespace Gajatko.IniFiles
 		{
 			writer.WriteIniFile(this);
 		}
-		/// <summary>Deletes a section and all it's values and comments. No exception is thrown if there is no section of requested name.</summary>
-		/// <param name="name">Name of section to delete.</param>
+        /// <summary>Deletes a section and all it's values and comments. No exception is thrown if there is no section of requested name.</summary>
+        /// <param name="name">Name of section to delete.</param>
+        /// 
+        /*
 		public void DeleteSection(string name)
 		{
 			IniFileSection section = getSection(name);
@@ -378,9 +380,45 @@ namespace Gajatko.IniFiles
 				elements.RemoveAt(i);
 			}
 		}
-		/// <summary>Formats whole INI file.</summary>
-		/// <param name="preserveIntendation">If true, old intendation will be standarized but not removed.</param>
-		public void Format(bool preserveIntendation)
+        */
+        public void DeleteSection(string name)
+        {
+            IniFileSection section = getSection(name);
+            if (section == null)
+                return;
+            IniFileSectionStart sect = section.sectionStart;
+            int elementIndex = elements.IndexOf(sect);
+
+            // remove section comment element (if present)
+            if (elementIndex > 0)
+            {
+                // if previous element was a comment remove it
+                if (elements[elementIndex - 1] is IniFileCommentary)
+                {
+                    elements.RemoveAt(elementIndex - 1);
+                    elementIndex = elements.IndexOf(sect);
+                }
+            }
+
+            // remove section value elements
+            if (elementIndex > -1)
+            {
+                elementIndex++;
+                // remove elements within section until reach a section element or end of element list
+                while ((elementIndex < elements.Count) && !(elements[elementIndex] is IniFileSectionStart))
+                {
+                    elements.RemoveAt(elementIndex);
+                }
+                // remove section header in element list
+                elements.Remove(sect);
+            }
+
+            // and finally section in section list
+            sections.Remove(section);
+        }
+        /// <summary>Formats whole INI file.</summary>
+        /// <param name="preserveIntendation">If true, old intendation will be standarized but not removed.</param>
+        public void Format(bool preserveIntendation)
 		{
 			string lastSectIntend = "";
 			string lastValIntend = "";

@@ -6,6 +6,7 @@ using System.IO;
 using Temp.IO;
 using Gajatko.IniFiles;
 
+
 namespace OctoWatcher
 {
 
@@ -14,13 +15,13 @@ namespace OctoWatcher
     {
         MyFileSystemWatcher fsWatcher = new MyFileSystemWatcher();
         string cfile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/octowatcher.ini";
-        IniFile config = new IniFile();
+
 
 
         public mainForm()
         {
             InitializeComponent();
-
+            IniFile config = new IniFile();
             if (File.Exists(cfile))
             {
                 // it exists, let's load it.
@@ -43,6 +44,12 @@ namespace OctoWatcher
 
         private void refreshProfileList()
         {
+            IniFile config = new IniFile();
+            if (File.Exists(cfile))
+            {
+                // it exists, let's load it.
+                config = IniFile.FromFile(cfile);
+            }
             profileList.Items.Clear();
             string[] sections = config.GetSectionNames();
             foreach (string name in sections)
@@ -158,19 +165,35 @@ namespace OctoWatcher
 
         public void saveSettings()
         {
+            IniFile config = new IniFile();
+            if (File.Exists(cfile))
+            {
+                // it exists, let's load it.
+                config = IniFile.FromFile(cfile);
+            }
             string profileName = profileList.Text;
-            config[profileName]["watchFolder"] = watchFolder.Text;
-            config[profileName]["octoPrintAddress"] = octoPrintAddress.Text;
-            config[profileName]["apiKey"] = apiKey.Text;
-            config[profileName]["enableKeywords"] = enableKeywords.Checked.ToString();
-            config[profileName]["localUpload"] = localUpload.Checked.ToString();
-            config[profileName]["autoStart"] = autoStart.Checked.ToString();
-            config.Save(cfile);
-            config = IniFile.FromFile(cfile);
+            if (profileName != "")
+            {
+                config[profileName]["watchFolder"] = watchFolder.Text;
+                config[profileName]["octoPrintAddress"] = octoPrintAddress.Text;
+                config[profileName]["apiKey"] = apiKey.Text;
+                config[profileName]["enableKeywords"] = enableKeywords.Checked.ToString();
+                config[profileName]["localUpload"] = localUpload.Checked.ToString();
+                config[profileName]["autoStart"] = autoStart.Checked.ToString();
+                config.Save(cfile);
+             
+                config = IniFile.FromFile(cfile);
+            }
         }
 
         public void loadSettings()
         {
+            IniFile config = new IniFile();
+            if (File.Exists(cfile))
+            {
+                // it exists, let's load it.
+                config = IniFile.FromFile(cfile);
+            }
             string profileName = profileList.Text;
             if(config[profileName]!= null)
             {
@@ -206,17 +229,87 @@ namespace OctoWatcher
 
         private void deleteProfile_Click(object sender, EventArgs e)
         {
-
-        }
-
-        private void removeProfile(string selectedText)
-        {
-
+            IniFile config = new IniFile();
+            if (File.Exists(cfile))
+            {
+                // it exists, let's load it.
+                config = IniFile.FromFile(cfile);
+            }
+            string profileToDelete = profileList.Text;
+            config.DeleteSection(profileToDelete);
+            config.Save(cfile);
+            refreshProfileList();
         }
 
         private void profileList_SelectedIndexChanged(object sender, EventArgs e)
         {
             loadSettings();
+        }
+
+        private void newProfile_Click(object sender, EventArgs e)
+        {
+            IniFile config = new IniFile();
+            if (File.Exists(cfile))
+            {
+                // it exists, let's load it.
+                config = IniFile.FromFile(cfile);
+            }
+            string profileName = "New Profile";
+            if(InputBox("Profile Name","New Profile Name:",ref profileName) == DialogResult.OK)
+            {
+                // create a new profile with the name!
+                config[profileName]["watchFolder"] = watchFolder.Text;
+                config[profileName]["octoPrintAddress"] = octoPrintAddress.Text;
+                config[profileName]["apiKey"] = apiKey.Text;
+                config[profileName]["enableKeywords"] = enableKeywords.Checked.ToString();
+                config[profileName]["localUpload"] = localUpload.Checked.ToString();
+                config[profileName]["autoStart"] = autoStart.Checked.ToString();
+                config.Save(cfile);
+                config = IniFile.FromFile(cfile);
+                refreshProfileList();
+            }
+        }
+
+        public static DialogResult InputBox(string title, string promptText, ref string value)
+        {
+            Form form = new Form();
+            Label label = new Label();
+            TextBox textBox = new TextBox();
+            Button buttonOk = new Button();
+            Button buttonCancel = new Button();
+
+            form.Text = title;
+            label.Text = promptText;
+            textBox.Text = value;
+
+            buttonOk.Text = "OK";
+            buttonCancel.Text = "Cancel";
+            buttonOk.DialogResult = DialogResult.OK;
+            buttonCancel.DialogResult = DialogResult.Cancel;
+
+            label.SetBounds(9, 20, 372, 13);
+            textBox.SetBounds(12, 36, 372, 20);
+            buttonOk.SetBounds(228, 72, 75, 23);
+            buttonCancel.SetBounds(309, 72, 75, 23);
+
+            label.AutoSize = true;
+            textBox.Anchor = textBox.Anchor | AnchorStyles.Right;
+            buttonOk.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+
+            form.ClientSize = new System.Drawing.Size(396, 107);
+            form.Controls.AddRange(new Control[] { label, textBox, buttonOk, buttonCancel });
+            form.ClientSize = new System.Drawing.Size(Math.Max(300, label.Right + 10), form.ClientSize.Height);
+            form.FormBorderStyle = FormBorderStyle.FixedDialog;
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MinimizeBox = false;
+            form.MaximizeBox = false;
+            form.AcceptButton = buttonOk;
+            form.CancelButton = buttonCancel;
+
+            DialogResult dialogResult = form.ShowDialog();
+            value = textBox.Text;
+            return dialogResult;
         }
     }
 

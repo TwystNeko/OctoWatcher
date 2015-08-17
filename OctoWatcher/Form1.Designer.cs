@@ -42,10 +42,11 @@
             this.autoStart = new System.Windows.Forms.CheckBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.profileList = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.saveProfile = new System.Windows.Forms.Button();
             this.deleteProfile = new System.Windows.Forms.Button();
+            this.newProfile = new System.Windows.Forms.Button();
+            this.profileList = new System.Windows.Forms.ComboBox();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -172,15 +173,6 @@
             this.statusLabel.Size = new System.Drawing.Size(39, 17);
             this.statusLabel.Text = "Ready";
             // 
-            // profileList
-            // 
-            this.profileList.FormattingEnabled = true;
-            this.profileList.Location = new System.Drawing.Point(12, 33);
-            this.profileList.Name = "profileList";
-            this.profileList.Size = new System.Drawing.Size(156, 21);
-            this.profileList.TabIndex = 12;
-            this.profileList.SelectedIndexChanged += new System.EventHandler(this.profileList_SelectedIndexChanged);
-            // 
             // label4
             // 
             this.label4.AutoSize = true;
@@ -210,11 +202,32 @@
             this.deleteProfile.UseVisualStyleBackColor = true;
             this.deleteProfile.Click += new System.EventHandler(this.deleteProfile_Click);
             // 
+            // newProfile
+            // 
+            this.newProfile.Location = new System.Drawing.Point(129, 33);
+            this.newProfile.Name = "newProfile";
+            this.newProfile.Size = new System.Drawing.Size(39, 22);
+            this.newProfile.TabIndex = 16;
+            this.newProfile.Text = "New";
+            this.newProfile.UseVisualStyleBackColor = true;
+            this.newProfile.Click += new System.EventHandler(this.newProfile_Click);
+            // 
+            // profileList
+            // 
+            this.profileList.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.profileList.FormattingEnabled = true;
+            this.profileList.Location = new System.Drawing.Point(12, 33);
+            this.profileList.Name = "profileList";
+            this.profileList.Size = new System.Drawing.Size(108, 21);
+            this.profileList.TabIndex = 12;
+            this.profileList.SelectedIndexChanged += new System.EventHandler(this.profileList_SelectedIndexChanged);
+            // 
             // mainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 330);
+            this.Controls.Add(this.newProfile);
             this.Controls.Add(this.deleteProfile);
             this.Controls.Add(this.saveProfile);
             this.Controls.Add(this.label4);
@@ -258,10 +271,11 @@
         private System.Windows.Forms.CheckBox autoStart;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
-        private System.Windows.Forms.ComboBox profileList;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button saveProfile;
         private System.Windows.Forms.Button deleteProfile;
+        private System.Windows.Forms.Button newProfile;
+        private System.Windows.Forms.ComboBox profileList;
     }
 }
 

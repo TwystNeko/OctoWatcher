@@ -42,7 +42,7 @@ namespace OctoWatcher
             loadSettings();
         }
 
-        private void refreshProfileList()
+        private void refreshProfileList(string selectedProfile = "Default")
         {
             IniFile config = new IniFile();
             if (File.Exists(cfile))
@@ -51,11 +51,18 @@ namespace OctoWatcher
                 config = IniFile.FromFile(cfile);
             }
             profileList.Items.Clear();
+            int index = 0;
             string[] sections = config.GetSectionNames();
             foreach (string name in sections)
             {
                 profileList.Items.Add(name);
+                if(name == selectedProfile)
+                {
+                    profileList.SelectedIndex = index;
+                }
+                index++;
             }
+            
         }
 
         private void enableWatch_CheckedChanged(object sender, EventArgs e)
@@ -266,7 +273,7 @@ namespace OctoWatcher
                 config[profileName]["autoStart"] = autoStart.Checked.ToString();
                 config.Save(cfile);
                 config = IniFile.FromFile(cfile);
-                refreshProfileList();
+                refreshProfileList(profileName);
             }
         }
 
